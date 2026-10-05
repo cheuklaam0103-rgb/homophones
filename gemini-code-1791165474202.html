@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>同音字小探險家 🔍</title>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    :root {
+      --primary-color: #4A90E2;
+      --secondary-color: #50E3C2;
+      --accent-color: #F5A623;
+      --bg-color: #F4F9FF;
+      --card-bg: #FFFFFF;
+      --text-color: #2C3E50;
+      --correct-color: #2ECC71;
+      --wrong-color: #E74C3C;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Comic Sans MS', 'Chalkboard SE', '微軟正黑體', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 15px;
+      font-size: 20px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 25px;
+      border-radius: 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      border: 4px solid #E1ECEF;
+    }
+
+    header {
+      text-align: center;
+      background: linear-gradient(135deg, #70A1FF, #1E90FF);
+      color: white;
+      padding: 20px;
+      border-radius: 20px;
+      margin-bottom: 25px;
+      position: relative;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 2.2rem;
+      letter-spacing: 2px;
+    }
+
+    .score-board {
+      margin-top: 10px;
+      font-size: 1.4rem;
+      font-weight: bold;
+      background: rgba(255, 255, 255, 0.2);
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 20px;
+    }
+
+    .section-card {
+      background: #F8FAFC;
+      border: 3px solid #E2E8F0;
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 25px;
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #2B6CB0;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tip-box {
+      background: #FEFCBF;
+      border-left: 6px solid #D69E2E;
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      margin-top: 10px;
+    }
+
+    .btn-speak {
+      background: #ED8936;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      vertical-align: middle;
+      margin-left: 8px;
+    }
+
+    .btn-speak:hover {
+      background: #DD6B20;
+    }
+
+    .quiz-container {
+      margin-top: 15px;
+    }
+
+    .question-card {
+      display: none;
+      background: white;
+      border: 3px solid #CBD5E0;
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .question-card.active {
+      display: block;
+      animation: fadeIn 0.4s ease-in-out;
+    }
+
+    .target-word {
+      font-size: 3rem;
+      color: #2B6CB0;
+      font-weight: bold;
+      background: #EBF8FF;
+      display: inline-block;
+      padding: 10px 30px;
+      border-radius: 16px;
+      margin: 15px 0;
+      border: 2px dashed #3182CE;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .option-btn {
+      background: #EDF2F7;
+      border: 3px solid #CBD5E0;
+      border-radius: 16px;
+      padding: 15px 10px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .option-btn:hover {
+      background: #E2E8F0;
+      transform: translateY(-3px);
+    }
+
+    .option-btn .icon {
+      font-size: 2rem;
+    }
+
+    .option-btn .meaning {
+      font-size: 0.9rem;
+      color: #718096;
+      font-weight: normal;
+    }
+
+    .feedback {
+      margin-top: 20px;
+      font-size: 1.4rem;
+      font-weight: bold;
+      min-height: 40px;
+    }
+
+    .nav-btns {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    .btn-nav {
+      background: #3182CE;
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn-nav:disabled {
+      background: #CBD5E0;
+      cursor: not-allowed;
+    }
+
+    .media-card {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 20px;
+      background: #EDF2F7;
+      padding: 15px;
+      border-radius: 16px;
+    }
+
+    .qr-img {
+      width: 140px;
+      height: 140px;
+      border-radius: 12px;
+      border: 2px solid #CBD5E0;
+      background: white;
+    }
+
+    .media-info {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .btn-link {
+      display: inline-block;
+      background: #E53E3E;
+      color: white;
+      text-decoration: none;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .btn-link:hover {
+      background: #C53030;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>同音字小探險家 🔍</h1>
+    <div class="score-board">獲得星星：<span id="star-count">0</span> ⭐</div>
+  </header>
+
+  <!-- 觀念導讀區 -->
+  <div class="section-card">
+    <div class="section-title">
+      💡 什麼是同音字？
+      <button class="btn-speak" onclick="speakText('同音字是指那些讀音相同，但字形和意思都不同的字。')">🔊 朗讀</button>
+    </div>
+    <p>同音字就是：<strong>讀音一樣 🗣️，字形不一樣 ✍️，意思不一樣 💡！</strong></p>
+    
+    <div class="tip-box">
+      <strong>🧠 智慧錦囊：</strong><br>
+      要正確分辨同音字，記得要多翻查字典，留意每一個字的<strong>形、音、義</strong>，寫作時仔細推敲喔！
+    </div>
+  </div>
+
+  <!-- 互動練習區 -->
+  <div class="section-card">
+    <div class="section-title">🎯 互動小遊戲：選出正確的同音字</div>
+    
+    <div class="quiz-container">
+      <!-- 題目 1 -->
+      <div class="question-card active" data-q="0">
+        <div>請找出與這個字<strong>讀音相同</strong>的字：</div>
+        <div class="target-word">們 <button class="btn-speak" onclick="speakText('們')">🔊</button></div>
+        <div class="options-grid">
+          <button class="option-btn" onclick="checkAnswer(0, '門', true, this)">
+            <span class="icon">🚪</span>
+            <span>門</span>
+            <span class="meaning">(大門)</span>
+          </button>
+          <button class="option-btn" onclick="checkAnswer(0, '胸', false, this)">
+            <span class="icon">🫁</span>
+            <span>胸</span>
+            <span class="meaning">(胸口)</span>
+          </button>
+          <button class="option-btn" onclick="checkAnswer(0, '正', false, this)">
+            <span class="icon">📐</span>
+            <span>正</span>
+            <span class="meaning">(正確)</span>
+          </button>
+          <button class="option-btn" onclick="checkAnswer(0, '友', false, this)">
+            <span class="icon">🤝</span>
+            <span>友</span>
+            <span class="meaning">(朋友)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 題目 2 -->
+      <div class="question-card" data-q="1">
+        <div>請找出與這個字<strong>讀音相同</strong>的字：</div>
+        <div class="target-word">證 <button class="btn-speak" onclick="speakText('證')">🔊</button></div>
+        <div class="options-grid">
+          <button class="option-btn" onclick="checkAnswer(1, '門', false, this)">
+            <span class="icon">🚪</span>
+            <span>門</span>
+            <span class="meaning">(大門)</span>
+          </button>
+          <button class="option-btn" onclick="checkAnswer(1, '正', true, this)">
+            <span class="icon">📐</span>
+            <span>正</span>
+            <span class="meaning">(正當)</span>
+          </button>
+          <button class="option-btn" onclick="checkAnswer(1, '胸', false, this)">
+            <span class="icon">🫁</span>
+            <span>胸</span>
+            <span class="meaning">(胸懷)</span>
+          </button>
+          <button class="option-btn" onclick="checkAnswer(1, '友', false, this)">
+            <span class="icon">🤝</span>
+            <span>友</span>
+            <span class="meaning">(友好)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 題目 3 -->
+      <div class="question-card" data-q="2">
+        <div>請找出與這個字<strong>讀音相同</strong>的字：</div>
+        <div class="target-word">有 <button class="btn-speak" onclick="speakText('有')">🔊</button></div>
+        <div class="options-grid">
+          <button class="option-btn" onclick="checkAnswer(2, '友', true, this)">
+            <span class="icon">🤝</span>
+            <span>友</span>
+            <span class="meaning">(朋友)</span>
+          </button>
+          <button class="option-btn" onclick="checkAnswer(2, '門', false, this)">
+            <span class="icon">🚪</span>
+            <span>門</span>
+            <span class="meaning">(門口)</span>
+          </button>
+          <button class="option-btn" onclick="checkAnswer(2, '正', false, this)">
+            <span class="icon">📐</span>
+            <span>正</span>
+            <span class="meaning">(正面)</span>
+          </button>
+          <button class="option-btn" onclick="checkAnswer(2, '胸', false, this)">
+            <span class="icon">🫁</span>
+            <span>胸</span>
+            <span class="meaning">(胸膛)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 題目 4 -->
+      <div class="question-card" data-q="3">
+        <div>請找出與這個字<strong>讀音相同</strong>的字：</div>
+        <div class="target-word">空 <button class="btn-speak" onclick="speakText('空')">🔊</button></div>
+        <div class="options-grid">
+          <button class="option-btn" onclick="checkAnswer(3, '胸', true, this)">
+            <span class="icon">🫁</span>
+            <span>胸</span>
+            <span class="meaning">(胸口)</span>
+          </button>
+          <button class="option-btn" onclick="checkAnswer(3, '門', false, this)">
+            <span class="icon">🚪</span>
+            <span>門</span>
+            <span class="meaning">(大門)</span>
+          </button>
+          <button class="option-btn" onclick="checkAnswer(3, '正', false, this)">
+            <span class="icon">📐</span>
+            <span>正</span>
+            <span class="meaning">(正是)</span>
+          </button>
+          <button class="option-btn" onclick="checkAnswer(3, '友', false, this)">
+            <span class="icon">🤝</span>
+            <span>友</span>
+            <span class="meaning">(友愛)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 題目 5 -->
+      <div class="question-card" data-q="4">
+        <div>請找出與這個字<strong>讀音相同</strong>的字：</div>
+        <div class="target-word">汽 <button class="btn-speak" onclick="speakText('汽')">🔊</button></div>
+        <div class="options-grid">
+          <button class="option-btn" onclick="checkAnswer(4, '戲', true, this)">
+            <span class="icon">🎭</span>
+            <span>戲</span>
+            <span class="meaning">(遊戲)</span>
+          </button>
+          <button class="option-btn" onclick="checkAnswer(4, '視', false, this)">
+            <span class="icon">📺</span>
+            <span>視</span>
+            <span class="meaning">(電視)</span>
+          </button>
+          <button class="option-btn" onclick="checkAnswer(4, '中', false, this)">
+            <span class="icon">🎯</span>
+            <span>中</span>
+            <span class="meaning">(中間)</span>
+          </button>
+          <button class="option-btn" onclick="checkAnswer(4, '身', false, this)">
+            <span class="icon">🧍</span>
+            <span>身</span>
+            <span class="meaning">(身體)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 題目 6 -->
+      <div class="question-card" data-q="5">
+        <div>請找出與這個字<strong>讀音相同</strong>的字：</div>
+        <div class="target-word">是 <button class="btn-speak" onclick="speakText('是')">🔊</button></div>
+        <div class="options-grid">
+          <button class="option-btn" onclick="checkAnswer(5, '視', true, this)">
+            <span class="icon">📺</span>
+            <span>視</span>
+            <span class="meaning">(電視)</span>
+          </button>
+          <button class="option-btn" onclick="checkAnswer(5, '戲', false, this)">
+            <span class="icon">🎭</span>
+            <span>戲</span>
+            <span class="meaning">(戲院)</span>
+          </button>
+          <button class="option-btn" onclick="checkAnswer(5, '鐘', false, this)">
+            <span class="icon">⏰</span>
+            <span>鐘</span>
+            <span class="meaning">(時鐘)</span>
+          </button>
+          <button class="option-btn" onclick="checkAnswer(5, '中', false, this)">
+            <span class="icon">🎯</span>
+            <span>中</span>
+            <span class="meaning">(中文)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 題目 7 -->
+      <div class="question-card" data-q="6">
+        <div>請找出與這個字<strong>讀音相同</strong>的字：</div>
+        <div class="target-word">新 <button class="btn-speak" onclick="speakText('新')">🔊</button></div>
+        <div class="options-grid">
+          <button class="option-btn" onclick="checkAnswer(6, '身', true, this)">
+            <span class="icon">🧍</span>
+            <span>身</span>
+            <span class="meaning">(身體)</span>
+          </button>
+          <button class="option-btn" onclick="checkAnswer(6, '鐘', false, this)">
+            <span class="icon">⏰</span>
+            <span>鐘</span>
+            <span class="meaning">(鐘錶)</span>
+          </button>
+          <button class="option-btn" onclick="checkAnswer(6, '視', false, this)">
+            <span class="icon">📺</span>
+            <span>視</span>
+            <span class="meaning">(視力)</span>
+          </button>
+          <button class="option-btn" onclick="checkAnswer(6, '戲', false, this)">
+            <span class="icon">🎭</span>
+            <span>戲</span>
+            <span class="meaning">(戲曲)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 題目 8 -->
+      <div class="question-card" data-q="7">
+        <div>請找出與這個字<strong>讀音相同</strong>的字（有兩個正確答案喔！）：</div>
+        <div class="target-word">終 <button class="btn-speak" onclick="speakText('終')">🔊</button></div>
+        <div class="options-grid">
+          <button class="option-btn" onclick="checkAnswer(7, '中', true, this)">
+            <span class="icon">🎯</span>
+            <span>中</span>
+            <span class="meaning">(中間)</span>
+          </button>
+          <button class="option-btn" onclick="checkAnswer(7, '鐘', true, this)">
+            <span class="icon">⏰</span>
+            <span>鐘</span>
+            <span class="meaning">(時鐘)</span>
+          </button>
+          <button class="option-btn" onclick="checkAnswer(7, '身', false, this)">
+            <span class="icon">🧍</span>
+            <span>身</span>
+            <span class="meaning">(身高)</span>
+          </button>
+          <button class="option-btn" onclick="checkAnswer(7, '視', false, this)">
+            <span class="icon">📺</span>
+            <span>視</span>
+            <span class="meaning">(電視)</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="feedback" id="feedback-text"></div>
+
+      <div class="nav-btns">
+        <button class="btn-nav" id="btn-prev" onclick="changeQuestion(-1)" disabled>⬅️ 上一題</button>
+        <button class="btn-nav" id="btn-next" onclick="changeQuestion(1)">下一題 ➡️</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 延伸學習影片區 -->
+  <div class="section-card">
+    <div class="section-title">📺 延伸學習：教育電視《錯綜的關係》</div>
+    <div class="media-card">
+      <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://emm.edcity.hk/media/0_1v7bm6hz" alt="ETV QR Code">
+      <div class="media-info">
+        <p><strong>建議觀看時段：</strong> 09:20 - 14:25</p>
+        <p>掃描 QR Code 或點擊下方按鈕觀看教育電視影片，了解更多同音字用法！</p>
+        <a class="btn-link" href="https://emm.edcity.hk/media/0_1v7bm6hz" target="_blank" rel="noopener noreferrer">▶️ 觀看教育電視影片</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentQuestion = 0;
+  let score = 0;
+  const totalQuestions = 8;
+  const answeredSet = new Set();
+
+  function speakText(text) {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'zh-HK';
+      utterance.rate = 0.85;
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  function checkAnswer(qIdx, selected, isCorrect, btnElement) {
+    const feedback = document.getElementById('feedback-text');
+    
+    if (isCorrect) {
+      feedback.style.color = 'var(--correct-color)';
+      feedback.innerHTML = '🎉 太棒了！答對了！';
+      btnElement.style.borderColor = 'var(--correct-color)';
+      btnElement.style.backgroundColor = '#E6FFFA';
+      
+      confetti({
+        particleCount: 50,
+        spread: 60,
+        origin: { y: 0.7 }
+      });
+
+      if (!answeredSet.has(qIdx)) {
+        score += 1;
+        answeredSet.add(qIdx);
+        document.getElementById('star-count').innerText = score;
+      }
+      speakText('答對了，太棒了！');
+    } else {
+      feedback.style.color = 'var(--wrong-color)';
+      feedback.innerHTML = '💪 再試一次看看喔！加油！';
+      btnElement.style.borderColor = 'var(--wrong-color)';
+      btnElement.style.backgroundColor = '#FFF5F5';
+      speakText('再試一次看看喔！');
+    }
+  }
+
+  function changeQuestion(direction) {
+    const questions = document.querySelectorAll('.question-card');
+    questions[currentQuestion].classList.remove('active');
+    
+    currentQuestion += direction;
+    
+    if (currentQuestion < 0) currentQuestion = 0;
+    if (currentQuestion >= totalQuestions) currentQuestion = totalQuestions - 1;
+
+    questions[currentQuestion].classList.add('active');
+    
+    document.getElementById('feedback-text').innerText = '';
+    document.getElementById('btn-prev').disabled = (currentQuestion === 0);
+    document.getElementById('btn-next').disabled = (currentQuestion === totalQuestions - 1);
+  }
+</script>
+
+</body>
+</html>
